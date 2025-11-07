@@ -538,8 +538,8 @@
         let penguinY = window.innerHeight - 150;
         let velocityY = 0;
         let worldSpeed = 5; // World moves towards penguin
-        let gravity = 0.4; // Reduced by 20% for smoother movement
-        let flapPower = -8; // Reduced by 20% for less amplitude
+        let gravity = 0.36; // Reduced by another 10% for even smoother movement
+        let flapPower = -7.2; // Reduced by another 10% for less amplitude
         let gameActive = false;
         let gameReady = true;
         let distance = 0;
@@ -605,7 +605,7 @@
             catapult.classList.add('launching');
 
             // Calculate initial velocity based on power
-            const initialVelocity = -8 - (launchPower / maxLaunchPower) * 8; // -8 to -16 (reduced by 20%)
+            const initialVelocity = -7.2 - (launchPower / maxLaunchPower) * 7.2; // -7.2 to -14.4 (reduced by another 10%)
 
             setTimeout(() => {
                 gameActive = true;
