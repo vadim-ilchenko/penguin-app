@@ -74,6 +74,7 @@
             width: 60px;
             height: 60px;
             font-size: 3em;
+            left: 150px;
             z-index: 50;
             transition: transform 0.1s ease;
             display: flex;
@@ -82,7 +83,6 @@
         }
 
         .penguin.ready {
-            left: 100px;
             bottom: 150px;
         }
 
@@ -220,6 +220,53 @@
         }
 
         .start-btn.hidden {
+            display: none;
+        }
+
+        /* Launch power meter */
+        .power-meter {
+            position: absolute;
+            bottom: 250px;
+            left: 100px;
+            width: 200px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            border: 3px solid white;
+            overflow: hidden;
+            display: none;
+            z-index: 100;
+        }
+
+        .power-meter.show {
+            display: block;
+        }
+
+        .power-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 15px;
+        }
+
+        .launch-hint {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px 50px;
+            border-radius: 30px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .launch-hint.hidden {
             display: none;
         }
 
@@ -441,10 +488,15 @@
             🎯 Влетіть в отвір в стіні!
         </div>
 
-        <!-- Start button -->
-        <button class="start-btn" id="startBtn" onclick="launchPenguin()">
-            🚀 ЗАПУСТИТИ!
-        </button>
+        <!-- Launch hint -->
+        <div class="launch-hint" id="launchHint">
+            ⌨️ Утримуйте ПРОБІЛ щоб запустити!
+        </div>
+
+        <!-- Power meter -->
+        <div class="power-meter" id="powerMeter">
+            <div class="power-bar" id="powerBar"></div>
+        </div>
     </div>
 
     <!-- Win Screen -->
@@ -473,28 +525,38 @@
         const gameContainer = document.getElementById('gameContainer');
         const penguin = document.getElementById('penguin');
         const catapult = document.getElementById('catapult');
-        const startBtn = document.getElementById('startBtn');
+        const launchHint = document.getElementById('launchHint');
+        const powerMeter = document.getElementById('powerMeter');
+        const powerBar = document.getElementById('powerBar');
         const instructions = document.getElementById('instructions');
         const distanceElement = document.getElementById('distance');
         const winScreen = document.getElementById('winScreen');
         const loseScreen = document.getElementById('loseScreen');
         const loseMessage = document.getElementById('loseMessage');
 
-        let penguinX = 100;
+        let penguinX = 150; // Fixed position
         let penguinY = window.innerHeight - 150;
         let velocityY = 0;
-        let velocityX = 8; // Horizontal speed
+        let worldSpeed = 5; // World moves towards penguin
         let gravity = 0.5;
-        let flapPower = -12;
+        let flapPower = -10;
         let gameActive = false;
+        let gameReady = true;
         let distance = 0;
         let obstacles = [];
         let targetWall = null;
         let animationFrame;
+        let obstaclesPassed = 0;
+
+        // Launch power variables
+        let spacePressed = false;
+        let launchPower = 0;
+        let maxLaunchPower = 100;
+        let chargingLaunch = false;
 
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-        const wallDistance = 3000; // Distance to target wall
+        const obstaclesToWin = 10; // Pass 10 obstacles to see wall
 
         // Create background clouds
         function createClouds() {
@@ -509,17 +571,47 @@
             }
         }
 
+        // Launch power charging
+        function startCharging() {
+            if (!gameReady || chargingLaunch) return;
+
+            chargingLaunch = true;
+            launchPower = 0;
+            powerMeter.classList.add('show');
+            launchHint.classList.add('hidden');
+
+            const chargeInterval = setInterval(() => {
+                if (!chargingLaunch) {
+                    clearInterval(chargeInterval);
+                    return;
+                }
+
+                launchPower += 2;
+                if (launchPower > maxLaunchPower) {
+                    launchPower = maxLaunchPower;
+                }
+                powerBar.style.width = launchPower + '%';
+            }, 50);
+        }
+
         // Launch penguin
         function launchPenguin() {
-            startBtn.classList.add('hidden');
+            if (!gameReady) return;
+
+            chargingLaunch = false;
+            gameReady = false;
+            powerMeter.classList.remove('show');
             instructions.style.display = 'none';
             catapult.classList.add('launching');
+
+            // Calculate initial velocity based on power
+            const initialVelocity = -10 - (launchPower / maxLaunchPower) * 10; // -10 to -20
 
             setTimeout(() => {
                 gameActive = true;
                 penguin.classList.remove('ready');
                 penguin.classList.add('flying');
-                velocityY = -15; // Initial upward velocity
+                velocityY = initialVelocity;
                 gameLoop();
                 spawnObstacles();
             }, 500);
@@ -529,16 +621,28 @@
         let keysPressed = {};
 
         document.addEventListener('keydown', (e) => {
-            if (!gameActive) return;
             keysPressed[e.key] = true;
 
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            // Space for launching
+            if (e.key === ' ' && gameReady && !gameActive) {
+                e.preventDefault();
+                if (!chargingLaunch) {
+                    startCharging();
+                }
+            }
+
+            if (gameActive && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
                 e.preventDefault();
             }
         });
 
         document.addEventListener('keyup', (e) => {
             keysPressed[e.key] = false;
+
+            // Release space to launch
+            if (e.key === ' ' && chargingLaunch) {
+                launchPenguin();
+            }
         });
 
         // Touch controls for mobile
@@ -583,14 +687,14 @@
                     return;
                 }
 
-                // Don't spawn too close to wall
-                if (distance > wallDistance - 500) {
+                // Spawn wall after enough obstacles
+                if (obstaclesPassed >= obstaclesToWin && !targetWall) {
                     clearInterval(interval);
                     spawnTargetWall();
                     return;
                 }
 
-                const gapHeight = 200;
+                const gapHeight = 220;
                 const gapPosition = Math.random() * (screenHeight - gapHeight - 200) + 100;
 
                 // Top obstacle
@@ -612,10 +716,11 @@
                     bottom: bottomObstacle,
                     x: screenWidth + 80,
                     gapY: gapPosition,
-                    gapHeight: gapHeight
+                    gapHeight: gapHeight,
+                    passed: false
                 });
 
-            }, 2000);
+            }, 2500);
         }
 
         // Spawn target wall
@@ -658,7 +763,6 @@
             // Apply gravity
             velocityY += gravity;
             penguinY += velocityY;
-            penguinX += velocityX;
 
             // Keep penguin in bounds (vertical)
             if (penguinY < 0) {
@@ -671,20 +775,25 @@
                 return;
             }
 
-            // Update penguin position
-            penguin.style.left = penguinX + 'px';
+            // Update penguin position (only Y, X is fixed)
             penguin.style.top = penguinY + 'px';
             penguin.style.transform = `rotate(${Math.min(Math.max(velocityY * 2, -30), 30)}deg)`;
 
             // Update distance
-            distance += velocityX;
+            distance += worldSpeed;
             distanceElement.textContent = Math.floor(distance);
 
             // Move and check obstacles
             obstacles.forEach((obstacle, index) => {
-                obstacle.x -= velocityX;
+                obstacle.x -= worldSpeed;
                 obstacle.top.style.right = (screenWidth - obstacle.x) + 'px';
                 obstacle.bottom.style.right = (screenWidth - obstacle.x) + 'px';
+
+                // Check if passed obstacle
+                if (!obstacle.passed && obstacle.x + 80 < penguinX) {
+                    obstacle.passed = true;
+                    obstaclesPassed++;
+                }
 
                 // Check collision
                 if (penguinX + 40 > obstacle.x && penguinX < obstacle.x + 80) {
@@ -704,7 +813,7 @@
 
             // Move and check target wall
             if (targetWall) {
-                targetWall.x -= velocityX;
+                targetWall.x -= worldSpeed;
                 targetWall.element.style.right = (screenWidth - targetWall.x) + 'px';
 
                 // Check if penguin reached wall
