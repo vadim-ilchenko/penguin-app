@@ -766,11 +766,12 @@
             penguinY += velocityY;
 
             // Keep penguin in bounds (vertical)
+            const penguinHitboxSize = 45;
             if (penguinY < 0) {
                 penguinY = 0;
                 velocityY = 0;
             }
-            if (penguinY > screenHeight - 60) {
+            if (penguinY > screenHeight - penguinHitboxSize - 5) {
                 // Hit ground
                 gameOver('Ви впали на землю!');
                 return;
@@ -791,14 +792,19 @@
                 obstacle.bottom.style.right = (screenWidth - obstacle.x) + 'px';
 
                 // Check if passed obstacle
-                if (!obstacle.passed && obstacle.x + 80 < penguinX) {
+                if (!obstacle.passed && obstacle.x + 65 < penguinX) {
                     obstacle.passed = true;
                     obstaclesPassed++;
                 }
 
-                // Check collision
-                if (penguinX + 40 > obstacle.x && penguinX < obstacle.x + 80) {
-                    if (penguinY < obstacle.gapY || penguinY + 60 > obstacle.gapY + obstacle.gapHeight) {
+                // Check collision (reduced hitboxes for easier gameplay)
+                const penguinHitboxSize = 45; // Reduced from 60 for smaller collision
+                const obstacleHitboxWidth = 65; // Reduced from 80 for more lenient collision
+                const gapPadding = 10; // Extra padding for gap
+
+                if (penguinX + 30 > obstacle.x && penguinX + 15 < obstacle.x + obstacleHitboxWidth) {
+                    if (penguinY + 7 < obstacle.gapY + gapPadding ||
+                        penguinY + penguinHitboxSize > obstacle.gapY + obstacle.gapHeight - gapPadding) {
                         gameOver('Ви врізались в перешкоду!');
                         return;
                     }
@@ -817,10 +823,14 @@
                 targetWall.x -= worldSpeed;
                 targetWall.element.style.right = (screenWidth - targetWall.x) + 'px';
 
-                // Check if penguin reached wall
-                if (penguinX + 60 > targetWall.x && penguinX < targetWall.x + 200) {
+                // Check if penguin reached wall (reduced hitboxes)
+                const penguinHitboxSize = 45;
+                const holePadding = 15; // Extra padding for easier entry
+
+                if (penguinX + 50 > targetWall.x && penguinX + 10 < targetWall.x + 200) {
                     // Check if in hole
-                    if (penguinY > targetWall.holeY && penguinY + 60 < targetWall.holeY + targetWall.holeHeight) {
+                    if (penguinY + 7 > targetWall.holeY - holePadding &&
+                        penguinY + penguinHitboxSize < targetWall.holeY + targetWall.holeHeight + holePadding) {
                         // SUCCESS!
                         gameWin();
                         return;
