@@ -538,8 +538,8 @@
         let penguinY = window.innerHeight - 150;
         let velocityY = 0;
         let worldSpeed = 5; // World moves towards penguin
-        let gravity = 0.5;
-        let flapPower = -10;
+        let gravity = 0.4; // Reduced by 20% for smoother movement
+        let flapPower = -8; // Reduced by 20% for less amplitude
         let gameActive = false;
         let gameReady = true;
         let distance = 0;
@@ -605,7 +605,7 @@
             catapult.classList.add('launching');
 
             // Calculate initial velocity based on power
-            const initialVelocity = -10 - (launchPower / maxLaunchPower) * 10; // -10 to -20
+            const initialVelocity = -8 - (launchPower / maxLaunchPower) * 8; // -8 to -16 (reduced by 20%)
 
             setTimeout(() => {
                 gameActive = true;
@@ -694,7 +694,7 @@
                     return;
                 }
 
-                const gapHeight = 220;
+                const gapHeight = 250; // Increased from 220 for easier gameplay
                 const gapPosition = Math.random() * (screenHeight - gapHeight - 200) + 100;
 
                 // Top obstacle
@@ -728,10 +728,11 @@
             const wall = document.createElement('div');
             wall.className = 'target-wall';
 
-            const holeY = Math.random() * (screenHeight - 300) + 100;
+            const holeY = Math.random() * (screenHeight - 350) + 120;
             const hole = document.createElement('div');
             hole.className = 'wall-hole';
             hole.style.top = holeY + 'px';
+            hole.style.height = '200px'; // Increased from 150px
 
             const indicator = document.createElement('div');
             indicator.className = 'hole-indicator';
@@ -745,7 +746,7 @@
                 element: wall,
                 x: screenWidth + 200,
                 holeY: holeY,
-                holeHeight: 150
+                holeHeight: 200
             };
         }
 
@@ -777,7 +778,7 @@
 
             // Update penguin position (only Y, X is fixed)
             penguin.style.top = penguinY + 'px';
-            penguin.style.transform = `rotate(${Math.min(Math.max(velocityY * 2, -30), 30)}deg)`;
+            penguin.style.transform = `rotate(${Math.min(Math.max(velocityY * 1.5, -25), 25)}deg)`;
 
             // Update distance
             distance += worldSpeed;
