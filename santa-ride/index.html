@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Ride - Гонка Санти 🎅</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Game header */
+        .game-header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .coin-counter, .distance-counter {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .coin-icon {
+            color: #ffd700;
+        }
+
+        /* Road */
+        .road {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(180deg, #34495e 0%, #2c3e50 50%, #1a252f 100%);
+            overflow: hidden;
+        }
+
+        .road-marking {
+            position: absolute;
+            width: 10px;
+            height: 60px;
+            background: white;
+            left: 33.33%;
+            animation: roadScroll 1s linear infinite;
+        }
+
+        .road-marking.right {
+            left: 66.66%;
+        }
+
+        @keyframes roadScroll {
+            0% {
+                top: -60px;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* Snow on sides */
+        .snow-side {
+            position: absolute;
+            width: 15%;
+            height: 100%;
+            background: linear-gradient(90deg, #ffffff 0%, #e8f4f8 100%);
+            top: 0;
+        }
+
+        .snow-side.left {
+            left: 0;
+            border-right: 3px solid #b0d4e3;
+        }
+
+        .snow-side.right {
+            right: 0;
+            border-left: 3px solid #b0d4e3;
+        }
+
+        /* Trees decoration */
+        .tree {
+            position: absolute;
+            font-size: 2em;
+            animation: treeScroll 3s linear infinite;
+        }
+
+        @keyframes treeScroll {
+            0% {
+                top: -50px;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* Santa sleigh */
+        .santa {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 4em;
+            transition: left 0.3s ease;
+            z-index: 50;
+            animation: bounce 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateX(-50%) translateY(0);
+            }
+            to {
+                transform: translateX(-50%) translateY(-10px);
+            }
+        }
+
+        /* Lanes */
+        .lane-left {
+            left: 28% !important;
+        }
+
+        .lane-center {
+            left: 50% !important;
+        }
+
+        .lane-right {
+            left: 72% !important;
+        }
+
+        /* Obstacles */
+        .obstacle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 3em;
+            animation: obstacleMove 3s linear;
+            z-index: 40;
+        }
+
+        @keyframes obstacleMove {
+            0% {
+                top: -100px;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        /* Coins */
+        .coin {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 2.5em;
+            animation: coinMove 3s linear, coinSpin 1s linear infinite;
+            z-index: 40;
+        }
+
+        @keyframes coinMove {
+            0% {
+                top: -100px;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        @keyframes coinSpin {
+            0% {
+                transform: translateX(-50%) rotateY(0deg);
+            }
+            100% {
+                transform: translateX(-50%) rotateY(360deg);
+            }
+        }
+
+        /* End screens */
+        .end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .end-screen.show {
+            display: flex;
+        }
+
+        .end-content {
+            text-align: center;
+            color: white;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .big-emoji {
+            font-size: 10em;
+            margin: 20px 0;
+            animation: bounceEmoji 0.6s ease infinite alternate;
+        }
+
+        @keyframes bounceEmoji {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-30px);
+            }
+        }
+
+        .sad-emoji {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: rotate(-5deg);
+            }
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .gift-box {
+            font-size: 8em;
+            margin: 20px 0;
+            animation: spinGift 2s ease-in-out infinite;
+        }
+
+        @keyframes spinGift {
+            0%, 100% {
+                transform: rotate(-10deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+        }
+
+        .discount {
+            font-size: 4em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            margin: 20px 0;
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .message {
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            padding: 20px 50px;
+            font-size: 1.8em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Snow particles for win */
+        .snow-particle {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: snowfall 3s linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes snowfall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.5em;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px 30px;
+            border-radius: 20px;
+        }
+
+        /* Explosion effect */
+        .explosion {
+            position: absolute;
+            font-size: 5em;
+            animation: explode 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .collect-effect {
+            position: absolute;
+            font-size: 3em;
+            animation: collectAnim 0.6s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes collectAnim {
+            0% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) translateY(-50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Game header -->
+        <div class="game-header">
+            <div class="coin-counter">
+                <span class="coin-icon">🪙</span> <span id="coinCount">0</span>/10
+            </div>
+            <div class="distance-counter">
+                📏 <span id="distance">0</span>м
+            </div>
+        </div>
+
+        <!-- Road -->
+        <div class="road" id="road">
+            <!-- Snow sides -->
+            <div class="snow-side left"></div>
+            <div class="snow-side right"></div>
+
+            <!-- Santa -->
+            <div class="santa lane-center" id="santa">🎅🦌</div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            ⬅️ ➡️ Використовуйте стрілки для керування<br>
+            🪙 Зберіть 10 монет щоб виграти!
+        </div>
+    </div>
+
+    <!-- Win Screen -->
+    <div class="end-screen" id="winScreen">
+        <div class="end-content">
+            <div class="message">🎉 ПЕРЕМОГА! 🎉</div>
+            <div class="big-emoji">🎅✨</div>
+            <div class="gift-box">🎁</div>
+            <div class="discount">ЗНИЖКА 20000₴</div>
+            <div class="message">Вітаємо! Ви зібрали всі монети!</div>
+            <button class="restart-btn" onclick="restartGame()">Грати ще раз!</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="end-screen" id="gameOverScreen">
+        <div class="end-content">
+            <div class="message">😢 Гра завершена</div>
+            <div class="big-emoji sad-emoji">🎅💔</div>
+            <div class="message" id="gameOverMessage">Спробуйте ще раз!</div>
+            <button class="restart-btn" onclick="restartGame()">Грати ще раз</button>
+        </div>
+    </div>
+
+    <script>
+        const santa = document.getElementById('santa');
+        const road = document.getElementById('road');
+        const coinCountElement = document.getElementById('coinCount');
+        const distanceElement = document.getElementById('distance');
+        const winScreen = document.getElementById('winScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+
+        let currentLane = 1; // 0 = left, 1 = center, 2 = right
+        let coinsCollected = 0;
+        let distance = 0;
+        let gameActive = true;
+        let obstacles = [];
+        let coins = [];
+        let gameSpeed = 3000; // ms for obstacles to travel
+        const finishDistance = 500; // meters to finish
+        const minCoinsToWin = 10;
+
+        const lanes = ['lane-left', 'lane-center', 'lane-right'];
+        const obstacleEmojis = ['🌲', '⛄', '🪨', '🎄', '☃️'];
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+
+            if (e.key === 'ArrowLeft' && currentLane > 0) {
+                currentLane--;
+                updateSantaPosition();
+            } else if (e.key === 'ArrowRight' && currentLane < 2) {
+                currentLane++;
+                updateSantaPosition();
+            }
+        });
+
+        // Touch controls for mobile
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (!gameActive) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0 && currentLane > 0) {
+                    currentLane--;
+                    updateSantaPosition();
+                } else if (diff < 0 && currentLane < 2) {
+                    currentLane++;
+                    updateSantaPosition();
+                }
+            }
+        });
+
+        function updateSantaPosition() {
+            santa.className = 'santa ' + lanes[currentLane];
+        }
+
+        // Create road markings
+        function createRoadMarkings() {
+            for (let i = 0; i < 10; i++) {
+                const marking = document.createElement('div');
+                marking.className = 'road-marking';
+                marking.style.top = (i * 100) + 'px';
+                marking.style.animationDelay = (i * 0.1) + 's';
+                road.appendChild(marking);
+
+                const markingRight = document.createElement('div');
+                markingRight.className = 'road-marking right';
+                markingRight.style.top = (i * 100) + 'px';
+                markingRight.style.animationDelay = (i * 0.1) + 's';
+                road.appendChild(markingRight);
+            }
+        }
+
+        // Create decorative trees
+        function createTrees() {
+            setInterval(() => {
+                if (!gameActive) return;
+
+                const tree = document.createElement('div');
+                tree.className = 'tree';
+                tree.textContent = '🌲';
+                tree.style.left = (Math.random() < 0.5 ? '5%' : '90%');
+                tree.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                road.appendChild(tree);
+
+                setTimeout(() => tree.remove(), 5000);
+            }, 1000);
+        }
+
+        // Spawn obstacle
+        function spawnObstacle() {
+            if (!gameActive) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.textContent = obstacleEmojis[Math.floor(Math.random() * obstacleEmojis.length)];
+
+            const lane = Math.floor(Math.random() * 3);
+            obstacle.style.left = (lane === 0 ? '28%' : lane === 1 ? '50%' : '72%');
+            obstacle.style.transform = 'translateX(-50%)';
+            obstacle.style.animationDuration = (gameSpeed / 1000) + 's';
+
+            obstacle.dataset.lane = lane;
+            road.appendChild(obstacle);
+            obstacles.push({ element: obstacle, lane: lane });
+
+            setTimeout(() => {
+                obstacle.remove();
+                obstacles = obstacles.filter(o => o.element !== obstacle);
+            }, gameSpeed);
+        }
+
+        // Spawn coin
+        function spawnCoin() {
+            if (!gameActive) return;
+
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.textContent = '🪙';
+
+            const lane = Math.floor(Math.random() * 3);
+            coin.style.left = (lane === 0 ? '28%' : lane === 1 ? '50%' : '72%');
+            coin.style.animationDuration = (gameSpeed / 1000) + 's';
+
+            coin.dataset.lane = lane;
+            coin.dataset.collected = 'false';
+            road.appendChild(coin);
+            coins.push({ element: coin, lane: lane, collected: false });
+
+            setTimeout(() => {
+                coin.remove();
+                coins = coins.filter(c => c.element !== coin);
+            }, gameSpeed);
+        }
+
+        // Check collisions
+        function checkCollisions() {
+            if (!gameActive) return;
+
+            const santaRect = santa.getBoundingClientRect();
+
+            // Check obstacles
+            obstacles.forEach(obstacle => {
+                if (obstacle.lane === currentLane) {
+                    const obstacleRect = obstacle.element.getBoundingClientRect();
+                    if (isColliding(santaRect, obstacleRect)) {
+                        // Crash!
+                        gameActive = false;
+                        createExplosion(santaRect.left + santaRect.width / 2, santaRect.top + santaRect.height / 2);
+
+                        setTimeout(() => {
+                            if (coinsCollected >= minCoinsToWin) {
+                                showWinScreen();
+                            } else {
+                                gameOverMessage.textContent = `Ви врізались! Зібрано монет: ${coinsCollected}/10`;
+                                showGameOverScreen();
+                            }
+                        }, 1000);
+                    }
+                }
+            });
+
+            // Check coins
+            coins.forEach(coin => {
+                if (!coin.collected && coin.lane === currentLane) {
+                    const coinRect = coin.element.getBoundingClientRect();
+                    if (isColliding(santaRect, coinRect)) {
+                        coin.collected = true;
+                        coin.element.dataset.collected = 'true';
+                        coinsCollected++;
+                        coinCountElement.textContent = coinsCollected;
+
+                        // Collect effect
+                        createCollectEffect(coinRect.left + coinRect.width / 2, coinRect.top);
+                        coin.element.remove();
+
+                        // Check win condition
+                        if (coinsCollected >= minCoinsToWin) {
+                            gameActive = false;
+                            setTimeout(() => {
+                                showWinScreen();
+                            }, 500);
+                        }
+                    }
+                }
+            });
+        }
+
+        function isColliding(rect1, rect2) {
+            return !(rect1.right < rect2.left ||
+                     rect1.left > rect2.right ||
+                     rect1.bottom < rect2.top ||
+                     rect1.top > rect2.bottom);
+        }
+
+        // Create explosion effect
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = x + 'px';
+            explosion.style.top = y + 'px';
+            explosion.style.position = 'fixed';
+            document.body.appendChild(explosion);
+
+            setTimeout(() => explosion.remove(), 800);
+        }
+
+        // Create collect effect
+        function createCollectEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.className = 'collect-effect';
+            effect.textContent = '+1 🪙';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            effect.style.position = 'fixed';
+            effect.style.color = '#ffd700';
+            effect.style.fontWeight = 'bold';
+            document.body.appendChild(effect);
+
+            setTimeout(() => effect.remove(), 600);
+        }
+
+        // Create snow storm for win
+        function createSnowStorm() {
+            for (let i = 0; i < 200; i++) {
+                setTimeout(() => {
+                    const snow = document.createElement('div');
+                    snow.className = 'snow-particle';
+                    snow.style.left = Math.random() * 100 + '%';
+                    snow.style.top = -10 + 'px';
+                    snow.style.width = (Math.random() * 8 + 3) + 'px';
+                    snow.style.height = snow.style.width;
+                    snow.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    snow.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(snow);
+
+                    setTimeout(() => snow.remove(), 5000);
+                }, i * 20);
+            }
+        }
+
+        // Show win screen
+        function showWinScreen() {
+            createSnowStorm();
+            setTimeout(() => {
+                winScreen.classList.add('show');
+            }, 500);
+        }
+
+        // Show game over screen
+        function showGameOverScreen() {
+            gameOverScreen.classList.add('show');
+        }
+
+        // Distance counter
+        function updateDistance() {
+            if (!gameActive) return;
+            distance += 5;
+            distanceElement.textContent = distance;
+
+            // Check if reached finish without enough coins
+            if (distance >= finishDistance && coinsCollected < minCoinsToWin) {
+                gameActive = false;
+                gameOverMessage.textContent = `Фініш! Але не вистачило монет: ${coinsCollected}/10`;
+                setTimeout(() => {
+                    showGameOverScreen();
+                }, 500);
+            }
+        }
+
+        // Game loop
+        function startGame() {
+            createRoadMarkings();
+            createTrees();
+
+            // Spawn obstacles
+            setInterval(() => {
+                if (gameActive && Math.random() < 0.6) {
+                    spawnObstacle();
+                }
+            }, 1500);
+
+            // Spawn coins
+            setInterval(() => {
+                if (gameActive && Math.random() < 0.8) {
+                    spawnCoin();
+                }
+            }, 1200);
+
+            // Collision check
+            setInterval(() => {
+                if (gameActive) {
+                    checkCollisions();
+                }
+            }, 50);
+
+            // Distance update
+            setInterval(() => {
+                updateDistance();
+            }, 200);
+        }
+
+        // Restart game
+        function restartGame() {
+            location.reload();
+        }
+        window.restartGame = restartGame;
+
+        // Start game
+        startGame();
+    </script>
+</body>
+</html>
