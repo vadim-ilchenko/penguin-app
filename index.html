@@ -322,6 +322,185 @@
             }
         }
 
+        /* Size progress bar */
+        .progress-container {
+            width: 300px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin: 20px auto;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f39c12, #e74c3c, #9b59b6);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+        }
+
+        /* Gift modal */
+        .gift-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .gift-modal.show {
+            display: flex;
+        }
+
+        .gift-content {
+            text-align: center;
+            color: white;
+            animation: giftReveal 1s ease-out;
+        }
+
+        .gift-box {
+            font-size: 10em;
+            animation: bounce 0.5s ease infinite alternate;
+        }
+
+        .discount {
+            font-size: 4em;
+            font-weight: bold;
+            color: #f39c12;
+            text-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
+            margin: 20px 0;
+        }
+
+        .gift-message {
+            font-size: 2em;
+            margin-top: 20px;
+        }
+
+        .close-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f39c12;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* BOOM effect */
+        .boom {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15em;
+            font-weight: bold;
+            color: #f39c12;
+            text-shadow: 0 0 50px rgba(243, 156, 18, 1);
+            animation: boom-animation 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @keyframes boom-animation {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes giftReveal {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.2) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-20px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.2s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px) rotate(-2deg);
+            }
+            75% {
+                transform: translateX(5px) rotate(2deg);
+            }
+        }
+
         /* Snow effect */
         .snowflake {
             position: absolute;
@@ -345,9 +524,13 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Happy Penguin Game 🐧</h1>
+        <h1>Tap Your Gift! 🎁</h1>
         <div class="score-board">
-            <span>Touches: <span id="score">0</span></span>
+            <span>Taps: <span id="score">0</span></span>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
         </div>
 
         <div class="penguin-container" id="penguinContainer">
@@ -379,7 +562,17 @@
             </div>
         </div>
 
-        <div class="instructions">👆 Click or tap the penguin!</div>
+        <div class="instructions">👆 Keep tapping fast to grow the penguin!</div>
+    </div>
+
+    <!-- Gift Modal -->
+    <div class="gift-modal" id="giftModal">
+        <div class="gift-content">
+            <div class="gift-box">🎁</div>
+            <div class="discount">ЗНИЖКА 2000₴</div>
+            <div class="gift-message">Вітаємо! Ви отримали подарунок! 🎉</div>
+            <button class="close-btn" onclick="resetGame()">Спробувати ще раз!</button>
+        </div>
     </div>
 
     <script>
@@ -389,9 +582,14 @@
         const scoreElement = document.getElementById('score');
         const pupilLeft = document.getElementById('pupilLeft');
         const pupilRight = document.getElementById('pupilRight');
+        const progressBar = document.getElementById('progressBar');
+        const giftModal = document.getElementById('giftModal');
 
         let score = 0;
-        let isHappy = false;
+        let penguinSize = 1; // Start at normal size
+        let maxSize = 3; // Maximum size before BOOM
+        let lastTapTime = Date.now();
+        let shrinkInterval;
 
         // Track mouse movement for pupil following
         document.addEventListener('mousemove', (e) => {
@@ -408,6 +606,32 @@
             pupilLeft.style.transform = `translate(${pupilX}px, ${pupilY}px)`;
             pupilRight.style.transform = `translate(${pupilX}px, ${pupilY}px)`;
         });
+
+        // Update penguin size
+        function updateSize() {
+            penguinContainer.style.transform = `scale(${penguinSize})`;
+            const progress = ((penguinSize - 1) / (maxSize - 1)) * 100;
+            progressBar.style.width = progress + '%';
+
+            // Add shake effect when close to max
+            if (penguinSize > maxSize * 0.8) {
+                penguinContainer.classList.add('shake');
+            } else {
+                penguinContainer.classList.remove('shake');
+            }
+        }
+
+        // Shrink penguin over time
+        function startShrinking() {
+            clearInterval(shrinkInterval);
+            shrinkInterval = setInterval(() => {
+                const timeSinceLastTap = Date.now() - lastTapTime;
+                if (timeSinceLastTap > 500 && penguinSize > 1) {
+                    penguinSize = Math.max(1, penguinSize - 0.05);
+                    updateSize();
+                }
+            }, 100);
+        }
 
         // Create hearts animation
         function createHeart(x, y) {
@@ -440,34 +664,97 @@
             }
         }
 
+        // Create confetti
+        function createConfetti() {
+            const colors = ['#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#2ecc71', '#f1c40f'];
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = -10 + 'px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 30);
+            }
+        }
+
+        // Show BOOM effect
+        function showBoom() {
+            const boom = document.createElement('div');
+            boom.className = 'boom';
+            boom.textContent = '💥 BOOM! 💥';
+            document.body.appendChild(boom);
+
+            setTimeout(() => boom.remove(), 1000);
+        }
+
+        // Show gift modal
+        function showGift() {
+            createConfetti();
+            showBoom();
+
+            setTimeout(() => {
+                giftModal.classList.add('show');
+            }, 1000);
+        }
+
+        // Reset game
+        function resetGame() {
+            giftModal.classList.remove('show');
+            penguinSize = 1;
+            score = 0;
+            scoreElement.textContent = score;
+            updateSize();
+            penguinContainer.classList.remove('shake');
+        }
+        window.resetGame = resetGame;
+
         // Main touch/click interaction
         penguinContainer.addEventListener('click', (e) => {
-            if (isHappy) return;
-
-            isHappy = true;
             score++;
             scoreElement.textContent = score;
+            lastTapTime = Date.now();
 
-            // Add happy animation
-            penguin.classList.add('happy');
-            mouth.classList.add('show');
+            // Grow penguin
+            if (penguinSize < maxSize) {
+                penguinSize = Math.min(maxSize, penguinSize + 0.15);
+                updateSize();
 
-            // Create visual effects
-            const rect = penguinContainer.getBoundingClientRect();
-            createHeart(rect.left + rect.width / 2 - 20, rect.top);
-            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                // Show smile
+                mouth.classList.add('show');
+                setTimeout(() => mouth.classList.remove('show'), 300);
 
-            // Play happy sound (visual feedback instead)
-            penguinContainer.style.filter = 'brightness(1.2)';
+                // Create visual effects
+                const rect = penguinContainer.getBoundingClientRect();
+                createHeart(rect.left + rect.width / 2 - 20, rect.top);
 
-            // Reset after animation
-            setTimeout(() => {
-                penguin.classList.remove('happy');
-                mouth.classList.remove('show');
-                isHappy = false;
-                penguinContainer.style.filter = 'brightness(1)';
-            }, 1500);
+                // Flash effect
+                penguinContainer.style.filter = 'brightness(1.3)';
+                setTimeout(() => penguinContainer.style.filter = 'brightness(1)', 100);
+            }
+
+            // Check if reached max size
+            if (penguinSize >= maxSize) {
+                clearInterval(shrinkInterval);
+                showGift();
+            }
         });
+
+        // Touch support for mobile
+        penguinContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            penguinContainer.click();
+        });
+
+        // Start shrinking mechanism
+        startShrinking();
 
         // Add snowflakes
         function createSnowflake() {
@@ -490,12 +777,6 @@
         for (let i = 0; i < 10; i++) {
             setTimeout(createSnowflake, i * 100);
         }
-
-        // Touch support for mobile
-        penguinContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            penguinContainer.click();
-        });
     </script>
 </body>
 </html>
