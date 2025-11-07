@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flying Penguin - Летючий Пінгвін 🐧</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Clouds background */
+        .cloud {
+            position: absolute;
+            font-size: 3em;
+            opacity: 0.5;
+            animation: cloudMove linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes cloudMove {
+            0% {
+                transform: translateX(100vw);
+            }
+            100% {
+                transform: translateX(-200px);
+            }
+        }
+
+        /* Catapult */
+        .catapult {
+            position: absolute;
+            left: 50px;
+            bottom: 100px;
+            font-size: 5em;
+            z-index: 10;
+            transform-origin: bottom center;
+        }
+
+        .catapult.launching {
+            animation: catapultLaunch 0.5s ease-out;
+        }
+
+        @keyframes catapultLaunch {
+            0% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(-45deg);
+            }
+            100% {
+                transform: rotate(-10deg);
+            }
+        }
+
+        /* Penguin */
+        .penguin {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 3em;
+            z-index: 50;
+            transition: transform 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .penguin.ready {
+            left: 100px;
+            bottom: 150px;
+        }
+
+        .penguin.flying {
+            animation: none;
+        }
+
+        .penguin.flapping {
+            animation: flap 0.3s ease-in-out;
+        }
+
+        @keyframes flap {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(-15deg);
+            }
+        }
+
+        /* Obstacles */
+        .obstacle {
+            position: absolute;
+            width: 80px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            z-index: 30;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .obstacle-top {
+            top: 0;
+        }
+
+        .obstacle-bottom {
+            bottom: 0;
+        }
+
+        /* Target wall */
+        .target-wall {
+            position: absolute;
+            right: -200px;
+            top: 0;
+            width: 200px;
+            height: 100vh;
+            background: linear-gradient(90deg, #8B4513, #A0522D);
+            z-index: 40;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .wall-hole {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: transparent;
+            border-top: 5px solid #FFD700;
+            border-bottom: 5px solid #FFD700;
+        }
+
+        .hole-indicator {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.5;
+                transform: translateY(-50%) scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1.2);
+            }
+        }
+
+        /* UI */
+        .game-ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            text-align: center;
+        }
+
+        .distance-counter {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #2c3e50;
+            font-size: 1.5em;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px 30px;
+            border-radius: 20px;
+        }
+
+        .start-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 60px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .start-btn:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .start-btn.hidden {
+            display: none;
+        }
+
+        /* Win/Lose screens */
+        .end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .end-screen.show {
+            display: flex;
+        }
+
+        .end-content {
+            text-align: center;
+            color: white;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .big-emoji {
+            font-size: 10em;
+            margin: 20px 0;
+            animation: bounceEmoji 0.6s ease infinite alternate;
+        }
+
+        @keyframes bounceEmoji {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-30px);
+            }
+        }
+
+        .sad-emoji {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: rotate(-5deg);
+            }
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .gift-box {
+            font-size: 8em;
+            margin: 20px 0;
+            animation: spinGift 2s ease-in-out infinite;
+        }
+
+        @keyframes spinGift {
+            0%, 100% {
+                transform: rotate(-10deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+        }
+
+        .discount {
+            font-size: 4em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            margin: 20px 0;
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .message {
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            padding: 20px 50px;
+            font-size: 1.8em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            animation: confettiFall 3s linear forwards;
+            z-index: 999;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Explosion */
+        .explosion {
+            position: absolute;
+            font-size: 5em;
+            animation: explode 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Success particles */
+        .success-particle {
+            position: fixed;
+            font-size: 2em;
+            animation: successFloat 2s ease-out forwards;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @keyframes successFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <!-- Game UI -->
+        <div class="game-ui">
+            <div class="distance-counter">
+                📏 Відстань: <span id="distance">0</span>м
+            </div>
+        </div>
+
+        <!-- Catapult -->
+        <div class="catapult" id="catapult">🏹</div>
+
+        <!-- Penguin -->
+        <div class="penguin ready" id="penguin">
+            🐧
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions" id="instructions">
+            ⬆️ ⬇️ Керуйте стрілками щоб літати<br>
+            🎯 Влетіть в отвір в стіні!
+        </div>
+
+        <!-- Start button -->
+        <button class="start-btn" id="startBtn" onclick="launchPenguin()">
+            🚀 ЗАПУСТИТИ!
+        </button>
+    </div>
+
+    <!-- Win Screen -->
+    <div class="end-screen" id="winScreen">
+        <div class="end-content">
+            <div class="message">🎉 НЕЙМОВІРНО! 🎉</div>
+            <div class="big-emoji">🐧✨</div>
+            <div class="gift-box">🎁</div>
+            <div class="discount">ЗНИЖКА 20000₴</div>
+            <div class="message">Ви влучили в ціль!</div>
+            <button class="restart-btn" onclick="restartGame()">Грати ще раз!</button>
+        </div>
+    </div>
+
+    <!-- Lose Screen -->
+    <div class="end-screen" id="loseScreen">
+        <div class="end-content">
+            <div class="message">😢 Не вдалося!</div>
+            <div class="big-emoji sad-emoji">🐧💔</div>
+            <div class="message" id="loseMessage">Спробуйте ще раз!</div>
+            <button class="restart-btn" onclick="restartGame()">Грати ще раз</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const penguin = document.getElementById('penguin');
+        const catapult = document.getElementById('catapult');
+        const startBtn = document.getElementById('startBtn');
+        const instructions = document.getElementById('instructions');
+        const distanceElement = document.getElementById('distance');
+        const winScreen = document.getElementById('winScreen');
+        const loseScreen = document.getElementById('loseScreen');
+        const loseMessage = document.getElementById('loseMessage');
+
+        let penguinX = 100;
+        let penguinY = window.innerHeight - 150;
+        let velocityY = 0;
+        let velocityX = 8; // Horizontal speed
+        let gravity = 0.5;
+        let flapPower = -12;
+        let gameActive = false;
+        let distance = 0;
+        let obstacles = [];
+        let targetWall = null;
+        let animationFrame;
+
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        const wallDistance = 3000; // Distance to target wall
+
+        // Create background clouds
+        function createClouds() {
+            for (let i = 0; i < 5; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.textContent = '☁️';
+                cloud.style.top = Math.random() * 60 + '%';
+                cloud.style.left = Math.random() * 100 + '%';
+                cloud.style.animationDuration = (Math.random() * 20 + 20) + 's';
+                gameContainer.appendChild(cloud);
+            }
+        }
+
+        // Launch penguin
+        function launchPenguin() {
+            startBtn.classList.add('hidden');
+            instructions.style.display = 'none';
+            catapult.classList.add('launching');
+
+            setTimeout(() => {
+                gameActive = true;
+                penguin.classList.remove('ready');
+                penguin.classList.add('flying');
+                velocityY = -15; // Initial upward velocity
+                gameLoop();
+                spawnObstacles();
+            }, 500);
+        }
+
+        // Keyboard controls
+        let keysPressed = {};
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            keysPressed[e.key] = true;
+
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keysPressed[e.key] = false;
+        });
+
+        // Touch controls for mobile
+        let touchY = 0;
+        document.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            touchY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            const currentY = e.touches[0].clientY;
+            const diff = touchY - currentY;
+
+            if (diff > 10) {
+                // Swipe up
+                flap(true);
+            } else if (diff < -10) {
+                // Swipe down
+                flap(false);
+            }
+            touchY = currentY;
+        });
+
+        // Flap wings
+        function flap(up) {
+            if (up) {
+                velocityY = flapPower;
+            } else {
+                velocityY = Math.abs(flapPower) / 2; // Slower down movement
+            }
+            penguin.classList.add('flapping');
+            setTimeout(() => penguin.classList.remove('flapping'), 300);
+        }
+
+        // Spawn obstacles
+        function spawnObstacles() {
+            const interval = setInterval(() => {
+                if (!gameActive) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                // Don't spawn too close to wall
+                if (distance > wallDistance - 500) {
+                    clearInterval(interval);
+                    spawnTargetWall();
+                    return;
+                }
+
+                const gapHeight = 200;
+                const gapPosition = Math.random() * (screenHeight - gapHeight - 200) + 100;
+
+                // Top obstacle
+                const topObstacle = document.createElement('div');
+                topObstacle.className = 'obstacle obstacle-top';
+                topObstacle.style.height = gapPosition + 'px';
+                topObstacle.style.right = '-80px';
+                gameContainer.appendChild(topObstacle);
+
+                // Bottom obstacle
+                const bottomObstacle = document.createElement('div');
+                bottomObstacle.className = 'obstacle obstacle-bottom';
+                bottomObstacle.style.height = (screenHeight - gapPosition - gapHeight) + 'px';
+                bottomObstacle.style.right = '-80px';
+                gameContainer.appendChild(bottomObstacle);
+
+                obstacles.push({
+                    top: topObstacle,
+                    bottom: bottomObstacle,
+                    x: screenWidth + 80,
+                    gapY: gapPosition,
+                    gapHeight: gapHeight
+                });
+
+            }, 2000);
+        }
+
+        // Spawn target wall
+        function spawnTargetWall() {
+            const wall = document.createElement('div');
+            wall.className = 'target-wall';
+
+            const holeY = Math.random() * (screenHeight - 300) + 100;
+            const hole = document.createElement('div');
+            hole.className = 'wall-hole';
+            hole.style.top = holeY + 'px';
+
+            const indicator = document.createElement('div');
+            indicator.className = 'hole-indicator';
+            indicator.textContent = '🎯';
+            hole.appendChild(indicator);
+
+            wall.appendChild(hole);
+            gameContainer.appendChild(wall);
+
+            targetWall = {
+                element: wall,
+                x: screenWidth + 200,
+                holeY: holeY,
+                holeHeight: 150
+            };
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameActive) return;
+
+            // Handle controls
+            if (keysPressed['ArrowUp']) {
+                flap(true);
+            } else if (keysPressed['ArrowDown']) {
+                flap(false);
+            }
+
+            // Apply gravity
+            velocityY += gravity;
+            penguinY += velocityY;
+            penguinX += velocityX;
+
+            // Keep penguin in bounds (vertical)
+            if (penguinY < 0) {
+                penguinY = 0;
+                velocityY = 0;
+            }
+            if (penguinY > screenHeight - 60) {
+                // Hit ground
+                gameOver('Ви впали на землю!');
+                return;
+            }
+
+            // Update penguin position
+            penguin.style.left = penguinX + 'px';
+            penguin.style.top = penguinY + 'px';
+            penguin.style.transform = `rotate(${Math.min(Math.max(velocityY * 2, -30), 30)}deg)`;
+
+            // Update distance
+            distance += velocityX;
+            distanceElement.textContent = Math.floor(distance);
+
+            // Move and check obstacles
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= velocityX;
+                obstacle.top.style.right = (screenWidth - obstacle.x) + 'px';
+                obstacle.bottom.style.right = (screenWidth - obstacle.x) + 'px';
+
+                // Check collision
+                if (penguinX + 40 > obstacle.x && penguinX < obstacle.x + 80) {
+                    if (penguinY < obstacle.gapY || penguinY + 60 > obstacle.gapY + obstacle.gapHeight) {
+                        gameOver('Ви врізались в перешкоду!');
+                        return;
+                    }
+                }
+
+                // Remove off-screen obstacles
+                if (obstacle.x < -80) {
+                    obstacle.top.remove();
+                    obstacle.bottom.remove();
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            // Move and check target wall
+            if (targetWall) {
+                targetWall.x -= velocityX;
+                targetWall.element.style.right = (screenWidth - targetWall.x) + 'px';
+
+                // Check if penguin reached wall
+                if (penguinX + 60 > targetWall.x && penguinX < targetWall.x + 200) {
+                    // Check if in hole
+                    if (penguinY > targetWall.holeY && penguinY + 60 < targetWall.holeY + targetWall.holeHeight) {
+                        // SUCCESS!
+                        gameWin();
+                        return;
+                    } else {
+                        // Hit wall
+                        gameOver('Ви врізались в стіну!');
+                        return;
+                    }
+                }
+            }
+
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+
+        // Create explosion
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = x + 'px';
+            explosion.style.top = y + 'px';
+            explosion.style.position = 'fixed';
+            document.body.appendChild(explosion);
+
+            setTimeout(() => explosion.remove(), 800);
+        }
+
+        // Create confetti
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+            for (let i = 0; i < 150; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = -10 + 'px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 5000);
+                }, i * 15);
+            }
+        }
+
+        // Create success particles
+        function createSuccessParticles() {
+            const emojis = ['⭐', '✨', '🎉', '🎊', '💫', '🌟'];
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'success-particle';
+                    particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+
+                    const angle = (Math.PI * 2 * i) / 30;
+                    const distance = 200 + Math.random() * 200;
+                    particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                    particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+
+                    document.body.appendChild(particle);
+                    setTimeout(() => particle.remove(), 2000);
+                }, i * 50);
+            }
+        }
+
+        // Game over
+        function gameOver(message) {
+            gameActive = false;
+            cancelAnimationFrame(animationFrame);
+            createExplosion(penguinX + 30, penguinY + 30);
+
+            setTimeout(() => {
+                loseMessage.textContent = message;
+                loseScreen.classList.add('show');
+            }, 1000);
+        }
+
+        // Game win
+        function gameWin() {
+            gameActive = false;
+            cancelAnimationFrame(animationFrame);
+
+            createSuccessParticles();
+            createConfetti();
+
+            setTimeout(() => {
+                winScreen.classList.add('show');
+            }, 1000);
+        }
+
+        // Restart game
+        function restartGame() {
+            location.reload();
+        }
+        window.restartGame = restartGame;
+
+        // Initialize
+        createClouds();
+    </script>
+</body>
+</html>
