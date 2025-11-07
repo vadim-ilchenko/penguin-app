@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snowball Target Game ⛄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            position: absolute;
+            top: 20px;
+            color: #2c3e50;
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .attempts-counter {
+            position: absolute;
+            top: 100px;
+            font-size: 2em;
+            color: #2c3e50;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .snowballs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .snowball-icon {
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease;
+        }
+
+        .snowball-icon.used {
+            opacity: 0.3;
+        }
+
+        .target-zone {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            transform: translateY(-50%);
+        }
+
+        .target {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle at 40% 40%, #ff6b6b, #c92a2a);
+            border: 4px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            animation: moveTarget 3s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+        }
+
+        .target::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 40% 40%, #ffd700, #ffa500);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+        }
+
+        .target::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .target:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes moveTarget {
+            0%, 100% {
+                left: 10%;
+                top: 30%;
+            }
+            25% {
+                left: 80%;
+                top: 60%;
+            }
+            50% {
+                left: 50%;
+                top: 20%;
+            }
+            75% {
+                left: 20%;
+                top: 70%;
+            }
+        }
+
+        .snowball-throw {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #c0c0c0);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Win/Lose screens */
+        .end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .end-screen.show {
+            display: flex;
+        }
+
+        .end-content {
+            text-align: center;
+            color: white;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .penguin-display {
+            font-size: 12em;
+            margin: 20px 0;
+            animation: bounce 0.6s ease infinite alternate;
+        }
+
+        .sad-penguin {
+            animation: sway 1s ease-in-out infinite;
+        }
+
+        @keyframes sway {
+            0%, 100% {
+                transform: rotate(-5deg);
+            }
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-30px);
+            }
+        }
+
+        .gift-box {
+            font-size: 8em;
+            margin: 20px 0;
+            animation: spin 2s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0%, 100% {
+                transform: rotate(-10deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+        }
+
+        .discount {
+            font-size: 4em;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            margin: 20px 0;
+            animation: glow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 40px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .message {
+            font-size: 2.5em;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            margin-top: 30px;
+            padding: 20px 50px;
+            font-size: 1.8em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Snow and confetti */
+        .snow-particle {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: snowfall 3s linear forwards;
+        }
+
+        @keyframes snowfall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            animation: confettiFall 3s linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .hit-explosion {
+            position: absolute;
+            font-size: 5em;
+            animation: explode 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 30px;
+            color: #2c3e50;
+            font-size: 1.5em;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Background snow */
+        .bg-snowflake {
+            position: absolute;
+            color: white;
+            font-size: 1.5em;
+            animation: bgSnowfall linear infinite;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        @keyframes bgSnowfall {
+            0% {
+                transform: translateY(-10px) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <h1>🎯 Snowball Target Game!</h1>
+
+        <div class="attempts-counter">
+            <div class="snowballs" id="snowballsDisplay">
+                <div class="snowball-icon"></div>
+                <div class="snowball-icon"></div>
+                <div class="snowball-icon"></div>
+            </div>
+        </div>
+
+        <div class="target-zone">
+            <div class="target" id="target"></div>
+        </div>
+
+        <div class="instructions">🖱️ Click anywhere to throw a snowball at the target!</div>
+    </div>
+
+    <!-- Win Screen -->
+    <div class="end-screen" id="winScreen">
+        <div class="end-content">
+            <div class="message">🎉 ВЛУЧИВ! 🎉</div>
+            <div class="penguin-display">🐧</div>
+            <div class="gift-box">🎁</div>
+            <div class="discount">ЗНИЖКА 20000₴</div>
+            <div class="message">Вітаємо! Ви отримали подарунок!</div>
+            <button class="restart-btn" onclick="restartGame()">Грати знову!</button>
+        </div>
+    </div>
+
+    <!-- Lose Screen -->
+    <div class="end-screen" id="loseScreen">
+        <div class="end-content">
+            <div class="message">😢 Спроби закінчилися...</div>
+            <div class="penguin-display sad-penguin">😢🐧</div>
+            <div class="message">Спробуйте ще раз!</div>
+            <button class="restart-btn" onclick="restartGame()">Нова гра</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const target = document.getElementById('target');
+        const winScreen = document.getElementById('winScreen');
+        const loseScreen = document.getElementById('loseScreen');
+        const snowballsDisplay = document.getElementById('snowballsDisplay');
+
+        let attemptsLeft = 3;
+        let gameActive = true;
+
+        // Create background snowflakes
+        function createBgSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'bg-snowflake';
+            snowflake.textContent = '❄️';
+            snowflake.style.left = Math.random() * 100 + '%';
+            snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            snowflake.style.fontSize = (Math.random() * 1 + 0.5) + 'em';
+            document.body.appendChild(snowflake);
+
+            setTimeout(() => snowflake.remove(), 5000);
+        }
+
+        // Create background snow periodically
+        setInterval(createBgSnowflake, 200);
+        for (let i = 0; i < 20; i++) {
+            setTimeout(createBgSnowflake, i * 100);
+        }
+
+        // Create massive snow effect
+        function createSnowStorm() {
+            for (let i = 0; i < 200; i++) {
+                setTimeout(() => {
+                    const snow = document.createElement('div');
+                    snow.className = 'snow-particle';
+                    snow.style.left = Math.random() * 100 + '%';
+                    snow.style.top = -10 + 'px';
+                    snow.style.width = (Math.random() * 8 + 3) + 'px';
+                    snow.style.height = snow.style.width;
+                    snow.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    snow.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(snow);
+
+                    setTimeout(() => snow.remove(), 5000);
+                }, i * 20);
+            }
+        }
+
+        // Create confetti
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe', '#fd79a8', '#fdcb6e'];
+            for (let i = 0; i < 150; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = -10 + 'px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(confetti);
+
+                    setTimeout(() => confetti.remove(), 5000);
+                }, i * 15);
+            }
+        }
+
+        // Check collision between snowball and target
+        function checkHit(snowballX, snowballY, targetRect) {
+            const targetCenterX = targetRect.left + targetRect.width / 2;
+            const targetCenterY = targetRect.top + targetRect.height / 2;
+            const distance = Math.hypot(snowballX - targetCenterX, snowballY - targetCenterY);
+            return distance < (targetRect.width / 2 + 20); // Hit radius
+        }
+
+        // Create explosion effect
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'hit-explosion';
+            explosion.textContent = '💥';
+            explosion.style.left = x + 'px';
+            explosion.style.top = y + 'px';
+            document.body.appendChild(explosion);
+
+            setTimeout(() => explosion.remove(), 800);
+        }
+
+        // Update attempts display
+        function updateAttemptsDisplay() {
+            const icons = snowballsDisplay.querySelectorAll('.snowball-icon');
+            icons.forEach((icon, index) => {
+                if (index >= attemptsLeft) {
+                    icon.classList.add('used');
+                }
+            });
+        }
+
+        // Throw snowball
+        function throwSnowball(clickX, clickY) {
+            if (!gameActive || attemptsLeft <= 0) return;
+
+            attemptsLeft--;
+            updateAttemptsDisplay();
+
+            const snowball = document.createElement('div');
+            snowball.className = 'snowball-throw';
+            snowball.style.left = clickX + 'px';
+            snowball.style.top = clickY + 'px';
+            document.body.appendChild(snowball);
+
+            const targetRect = target.getBoundingClientRect();
+            const targetX = targetRect.left + targetRect.width / 2;
+            const targetY = targetRect.top + targetRect.height / 2;
+
+            // Animate snowball to target
+            const duration = 600;
+            const startTime = Date.now();
+            const startX = clickX;
+            const startY = clickY;
+
+            function animateSnowball() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Parabolic trajectory
+                const currentX = startX + (targetX - startX) * progress;
+                const currentY = startY + (targetY - startY) * progress - Math.sin(progress * Math.PI) * 100;
+
+                snowball.style.left = currentX + 'px';
+                snowball.style.top = currentY + 'px';
+                snowball.style.transform = `scale(${1 + progress * 0.5})`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateSnowball);
+                } else {
+                    // Check hit
+                    const finalTargetRect = target.getBoundingClientRect();
+                    const hit = checkHit(currentX, currentY, finalTargetRect);
+
+                    if (hit) {
+                        // HIT!
+                        gameActive = false;
+                        createExplosion(currentX, currentY);
+                        target.style.display = 'none';
+
+                        setTimeout(() => {
+                            createSnowStorm();
+                            createConfetti();
+                            setTimeout(() => {
+                                winScreen.classList.add('show');
+                            }, 500);
+                        }, 500);
+                    } else {
+                        // MISS
+                        if (attemptsLeft <= 0) {
+                            // Game over
+                            gameActive = false;
+                            setTimeout(() => {
+                                loseScreen.classList.add('show');
+                            }, 800);
+                        }
+                    }
+
+                    snowball.remove();
+                }
+            }
+
+            animateSnowball();
+        }
+
+        // Click handler
+        gameContainer.addEventListener('click', (e) => {
+            if (!gameActive) return;
+
+            // Don't throw if clicking on target directly (for better UX)
+            if (e.target === target) {
+                return;
+            }
+
+            throwSnowball(e.clientX, e.clientY);
+        });
+
+        // Restart game
+        function restartGame() {
+            attemptsLeft = 3;
+            gameActive = true;
+            winScreen.classList.remove('show');
+            loseScreen.classList.remove('show');
+            target.style.display = 'block';
+
+            const icons = snowballsDisplay.querySelectorAll('.snowball-icon');
+            icons.forEach(icon => icon.classList.remove('used'));
+        }
+        window.restartGame = restartGame;
+
+        // Mobile touch support
+        gameContainer.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            throwSnowball(touch.clientX, touch.clientY);
+        });
+    </script>
+</body>
+</html>
